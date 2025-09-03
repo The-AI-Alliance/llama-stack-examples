@@ -1,3 +1,4 @@
 llama-stack-client
 tavily-python
+deepagents
 

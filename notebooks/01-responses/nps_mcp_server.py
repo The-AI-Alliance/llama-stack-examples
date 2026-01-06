@@ -24,7 +24,12 @@ from typing import Optional
 import httpx
 from fastmcp import FastMCP
 from fastmcp.server.dependencies import get_http_request
+from fastmcp.server.middleware import Middleware, MiddlewareContext, CallNext
+from fastmcp.server.middleware.logging import LoggingMiddleware
+from fastmcp.tools.tool import Tool
 from starlette.requests import Request
+from typing import Sequence
+import mcp.types
 import os
 import argparse
 import json
@@ -40,10 +45,6 @@ def get_logger():
         # Create a default logger with WARNING level if not configured
         logger = configure_logging("WARNING")
     return logger
-
-# Initialize FastMCP server
-# The name "nps" is how this server will be identified by clients
-mcp = FastMCP("nps")
 
 # Constants for the National Park Service API
 NPS_API_BASE = "https://developer.nps.gov/api/v1"
@@ -106,6 +107,28 @@ def get_api_key() -> str:
     if not api_key:
         return "DEMO_KEY"  # NPS allows limited use with DEMO_KEY
     return api_key
+
+class ListToolsLoggerMiddleware(Middleware):
+    """Custom middleware to log when list-tools is called."""
+    
+    async def on_list_tools(
+        self,
+        context: MiddlewareContext[mcp.types.ListToolsRequest],
+        call_next: CallNext[mcp.types.ListToolsRequest, Sequence[Tool]],
+    ) -> Sequence[Tool]:
+        # Log before processing
+        get_logger().debug(f"list-tools called at {context.timestamp} (method: {context.method})")
+        
+        # Call the next middleware or core handler
+        tools = await call_next(context)
+        
+        # Log after processing
+        get_logger().debug(f"list-tools returned {len(tools)} tools")
+        return tools
+
+# Initialize FastMCP server
+# The name "nps" is how this server will be identified by clients
+mcp = FastMCP(name="nps", middleware=[LoggingMiddleware(logger=get_logger()), ListToolsLoggerMiddleware()])
 
 @mcp.tool()
 async def search_parks(

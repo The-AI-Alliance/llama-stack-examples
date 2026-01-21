@@ -184,10 +184,16 @@ The NPS API has the following rate limits:
 
 ## Example Usage
 
-See `example_nps_usage.py` for a complete demonstration:
+See `nps_mcp_server.py` for more details. You can run it like this:
 
 ```bash
-python example_nps_usage.py
+python nps_mcp_server.py
+```
+
+See also the Jupyter notebook, `responses-api.ipynb`. You can view it by running Jupyter Lab and then opening the notebook:
+
+```bash
+jupyter lab
 ```
 
 ## Error Handling
